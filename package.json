@@ -16,6 +16,7 @@
     "fastify": "^4.3.0",
     "fastify-print-routes": "^1.0.5",
     "pg": "^8.7.3",
+    "redis": "^4.2.0",
     "regenerator-runtime": "^0.13.9"
   },
   "devDependencies": {

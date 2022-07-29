@@ -2,10 +2,12 @@ import Fastify from 'fastify';
 import pg from 'pg';
 import 'dotenv/config';
 import fs from 'fs';
+import { createClient } from 'redis';
 
 export class Overdrive {
   fastify: any;
   db: pg.Client;
+  cache: any;
 
   constructor() {
     const dbUrl = process.env.DATABASE_URL;
@@ -18,6 +20,14 @@ export class Overdrive {
     this.fastify = Fastify({
       logger: env === 'dev' ? true : false,
     });
+
+    const redisUrl = process.env.REDIS_URL;
+    if (redisUrl) {
+      this.cache = createClient({ url: redisUrl });
+      this.cache.on('error', (err) => console.log('Redis Client Error', err));
+      this.cache.connect();
+    }
+
     console.log('Overdrive Initialized');
   }
 
@@ -75,6 +85,8 @@ export class Overdrive {
   private registerer(importedServics) {
     const routes = new Map();
     this.fastify.decorate('querySQL', async (request, queryString, value) => await this.queryPg(queryString));
+    this.fastify.decorate('cacheSet', async (request, key, value) => await this.cache.set(key, value));
+    this.fastify.decorate('cacheGet', async (request, key, value) => await this.cache.get(key, value));
     importedServics.forEach((value, key) => {
       if (key.includes('get')) {
         let k = `/${key.replace('get', '').toLowerCase()}`;
